@@ -14,6 +14,7 @@
 package com.google.firebase.samples.apps.mlkit.java;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.media.Image;
 import android.support.annotation.GuardedBy;
 import android.support.annotation.NonNull;
@@ -75,8 +76,32 @@ public abstract class VisionProcessorBase<T> implements VisionImageProcessor {
     @Override
     public void process(Bitmap bitmap, final GraphicOverlay
             graphicOverlay) {
-        detectInVisionImage(null /* bitmap */, FirebaseVisionImage.fromBitmap(bitmap), null,
+
+        // resize bitmap: 4x height and 8x width
+        Bitmap newBitmap = getResizedBitmap(bitmap, bitmap.getWidth() * 8, bitmap.getHeight() * 4, false);
+
+
+
+        detectInVisionImage(null /* bitmap */, FirebaseVisionImage.fromBitmap(newBitmap), null,
                 graphicOverlay);
+    }
+
+    private static Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight, boolean isNecessaryToKeepOrig) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+        if(!isNecessaryToKeepOrig){
+            bm.recycle();
+        }
+        return resizedBitmap;
     }
 
     private synchronized void processLatestImage(final GraphicOverlay graphicOverlay) {
